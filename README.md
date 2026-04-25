@@ -13,6 +13,7 @@ On first boot, BizerOS automatically:
 
 1. Registers [github.com/kelsi-bizer/bizeros-appstore](https://github.com/kelsi-bizer/bizeros-appstore) as the default app store.
 2. Installs a curated set of business-ready apps:
+   - **BizerOS Dash** — the BizerOS dashboard ([source](https://github.com/kelsi-bizer/bizeros-dashboard))
    - **Authentik** — SSO / identity
    - **OpenClaw** — workflow / business logic
    - **Mattermost** — team chat

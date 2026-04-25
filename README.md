@@ -2,7 +2,7 @@
 
 BizerOS is a white-label, business-focused fork of [Runtipi](https://github.com/runtipi/runtipi). It packages the apps small businesses actually run — auth, chat, files, billing, networking — behind a one-click installer and a single dashboard you control.
 
-[![License](https://img.shields.io/github/license/kelsi-bizer/bizeros-dashboard)](LICENSE)
+[![License](https://img.shields.io/github/license/kelsi-bizer/bizeros)](LICENSE)
 
 > [!NOTE]
 > BizerOS is built on top of Runtipi (TypeScript + NestJS + React). Most of the heavy lifting — Docker orchestration, the app-store model, Traefik routing — is Runtipi's work. BizerOS adds branded UI, a curated app store, and an opinionated first-boot flow.

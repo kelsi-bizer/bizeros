@@ -25,26 +25,29 @@ export const Welcome = ({ allowErrorMonitoring }: Props) => {
     <div className="page page-center">
       <div className="container container-tight py-4">
         <div className="text-center mb-4">
-          <img alt="Runtipi logo" src={getLogo(true)} height={50} width={50} style={{ maxWidth: '100%', height: 'auto' }} />
+          <img alt="BizerOS logo" src={getLogo(true)} height={50} width={50} style={{ maxWidth: '100%', height: 'auto' }} />
         </div>
         <div className="card card-md">
           <div className="card-body">
-            <h2 className="h2 text-center mb-4">Thanks for using Runtipi</h2>
+            <h2 className="h2 text-center mb-4">Welcome to BizerOS</h2>
             <p className="text-center mb-4">
-              Runtipi is a free and open source project that is developed and maintained by a small team. If it helps you in any way, please consider
-              supporting the project by{' '}
-              <a target="_blank" href="https://github.com/runtipi/runtipi?sponsor=1" rel="noreferrer">
-                donating
-              </a>{' '}
-              or by{' '}
+              BizerOS is a one-click, self-hosted business platform for running your stack on your own hardware. We&apos;re standing on the shoulders
+              of{' '}
               <a target="_blank" rel="noreferrer" href="https://github.com/runtipi/runtipi">
+                Runtipi
+              </a>
+              , the open-source homeserver this project is built on. If BizerOS helps your business, consider{' '}
+              <a target="_blank" rel="noreferrer" href="https://github.com/kelsi-bizer/bizeros">
                 contributing to the codebase
+              </a>{' '}
+              or{' '}
+              <a target="_blank" href="https://github.com/runtipi/runtipi?sponsor=1" rel="noreferrer">
+                supporting Runtipi upstream
               </a>
               .
               <br />
               <br />
-              If you can&apos;t do either of those, please consider enabling the opt-in anonymous error reporting feature. This will help us identify
-              and fix bugs faster.
+              You can also help us by enabling the opt-in anonymous error reporting feature below. It helps us identify and fix bugs faster.
             </p>
             <div className="d-flex flex-column align-items-center">
               <Switch checked={errorMonitoring} onCheckedChange={setErrorMonitoring} label="Enable error reporting" />
@@ -60,7 +63,7 @@ export const Welcome = ({ allowErrorMonitoring }: Props) => {
             </div>
             <div className="hr-text">Join the community</div>
             <div className="row justify-content-center gap-2">
-              <Button onClick={() => openLink('https://github.com/runtipi/runtipi/discussions')}>
+              <Button onClick={() => openLink('https://github.com/kelsi-bizer/bizeros/discussions')}>
                 <IconBrandGithub /> Github
               </Button>
               <Button onClick={() => openLink('https://discord.gg/WGW7YP7E5j')}>

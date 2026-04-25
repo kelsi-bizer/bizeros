@@ -10,7 +10,7 @@ import { DATA_DIR } from '../constants';
 import { type } from 'arktype';
 
 const OLD_DEFAULT_REPO_URL = 'https://github.com/meienberger/runtipi-appstore';
-export const DEFAULT_REPO_URL = 'https://github.com/runtipi/runtipi-appstore';
+export const DEFAULT_REPO_URL = 'https://github.com/kelsi-bizer/bizeros-appstore';
 
 /**
  * Generates a random seed if it does not exist yet
@@ -146,7 +146,7 @@ export const generateSystemEnvFile = async (): Promise<Map<string, string>> => {
   envMap.set('LOG_LEVEL', settings.logLevel || envMap.get('LOG_LEVEL') || 'info');
   envMap.set('EXPERIMENTAL_INSECURE_COOKIE', settings.experimental_insecureCookie ? 'true' : 'false');
   envMap.set('THEME_BASE', settings.themeBase || envMap.get('THEME_BASE') || 'gray');
-  envMap.set('THEME_COLOR', settings.themeColor || envMap.get('THEME_COLOR') || 'blue');
+  envMap.set('THEME_COLOR', settings.themeColor || envMap.get('THEME_COLOR') || 'bizeros');
 
   await fs.promises.writeFile(envFilePath, envUtils.envMapToString(envMap));
 

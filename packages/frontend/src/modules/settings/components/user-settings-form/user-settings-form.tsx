@@ -316,7 +316,7 @@ export const UserSettingsForm = (props: IProps) => {
               </>
             }
             error={errors.appsRepoUrl?.message}
-            placeholder="https://github.com/runtipi/runtipi-appstore"
+            placeholder="https://github.com/kelsi-bizer/bizeros-appstore"
           />
         </div>
         <div>

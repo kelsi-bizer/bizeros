@@ -105,7 +105,7 @@ export const AddLinkDialog: React.FC<AddLinkDialogProps> = ({ isOpen, onClose, l
               {...register('title')}
               maxLength={20}
               label={t('LINKS_FORM_LINK_TITLE')}
-              placeholder="Runtipi demo"
+              placeholder="BizerOS demo"
               error={errors.title?.message}
             />
             <Input
@@ -123,7 +123,7 @@ export const AddLinkDialog: React.FC<AddLinkDialogProps> = ({ isOpen, onClose, l
               {...register('url')}
               className="mt-3"
               label={t('LINKS_FORM_LINK_URL')}
-              placeholder="https://demo.runtipi.io"
+              placeholder="https://demo.bizeros.io"
               error={errors.url?.message}
             />
 

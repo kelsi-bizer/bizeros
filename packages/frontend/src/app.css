@@ -24,3 +24,18 @@ body {
   max-width: 300px;
   text-align: center;
 }
+
+.bg-bizeros {
+  background-color: #1b2c56 !important;
+}
+
+body[data-bs-theme-primary="bizeros"] {
+  --tblr-primary: #1b2c56;
+  --tblr-primary-rgb: 27, 44, 86;
+  --tblr-primary-fg: #ffffff;
+  --tblr-primary-darken: #131f3d;
+  --tblr-primary-lt: #e8eaf0;
+  --tblr-link-color: #c2410c;
+  --tblr-link-color-rgb: 194, 65, 12;
+  --tblr-link-color-hover: #9a330a;
+}

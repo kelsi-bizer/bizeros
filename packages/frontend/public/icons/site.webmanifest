@@ -1,6 +1,6 @@
 {
-  "name": "Runtipi",
-  "short_name": "Runtipi",
+  "name": "BizerOS",
+  "short_name": "BizerOS",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#f9fafb",
-  "background_color": "#f9fafb",
+  "theme_color": "#1B2C56",
+  "background_color": "#1B2C56",
   "display": "standalone"
 }

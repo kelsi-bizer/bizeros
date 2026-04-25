@@ -15,7 +15,6 @@ On first boot, BizerOS automatically:
 2. Installs a curated set of business-ready apps:
    - **BizerOS Dash** — the BizerOS dashboard, slug `bizeros-dashboard` ([source](https://github.com/kelsi-bizer/bizeros-dashboard))
    - **Authentik** — SSO / identity
-   - **OpenClaw** — workflow / business logic
    - **Mattermost** — team chat
    - **Nextcloud** — file sync & sharing
    - **Invoice Ninja** — invoicing & billing

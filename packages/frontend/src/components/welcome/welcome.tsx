@@ -37,7 +37,7 @@ export const Welcome = ({ allowErrorMonitoring }: Props) => {
                 Runtipi
               </a>
               , the open-source homeserver this project is built on. If BizerOS helps your business, consider{' '}
-              <a target="_blank" rel="noreferrer" href="https://github.com/kelsi-bizer/bizeros">
+              <a target="_blank" rel="noreferrer" href="https://github.com/kelsi-bizer/bizeros-dashboard">
                 contributing to the codebase
               </a>{' '}
               or{' '}
@@ -63,7 +63,7 @@ export const Welcome = ({ allowErrorMonitoring }: Props) => {
             </div>
             <div className="hr-text">Join the community</div>
             <div className="row justify-content-center gap-2">
-              <Button onClick={() => openLink('https://github.com/kelsi-bizer/bizeros/discussions')}>
+              <Button onClick={() => openLink('https://github.com/kelsi-bizer/bizeros-dashboard/discussions')}>
                 <IconBrandGithub /> Github
               </Button>
               <Button onClick={() => openLink('https://discord.gg/WGW7YP7E5j')}>

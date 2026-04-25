@@ -88,8 +88,8 @@ export class AppService {
     const { version: currentVersion } = this.configuration.getConfig();
 
     const [githubRelease, releasesSince] = await Promise.all([
-      this.githubService.getLatestRelease('kelsi-bizer', 'bizeros'),
-      this.githubService.getReleasesSince('kelsi-bizer', 'bizeros', currentVersion),
+      this.githubService.getLatestRelease('kelsi-bizer', 'bizeros-dashboard'),
+      this.githubService.getReleasesSince('kelsi-bizer', 'bizeros-dashboard', currentVersion),
     ]);
 
     return {

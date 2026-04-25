@@ -65,11 +65,11 @@ export const BaseHeader = (props: BaseHeaderProps) => {
         <div className="navbar-nav flex-row order-md-last">
           <div className="nav-item d-none d-xl-flex me-3">
             <div className="btn-list">
-              <a href="https://github.com/kelsi-bizer/bizeros" target="_blank" rel="noreferrer" className="btn btn-ghost">
+              <a href="https://github.com/kelsi-bizer/bizeros-dashboard" target="_blank" rel="noreferrer" className="btn btn-ghost">
                 <IconBrandGithub data-testid="icon-github" className="me-1 icon" size={24} />
                 {t('HEADER_SOURCE_CODE')}
               </a>
-              <a href="https://github.com/kelsi-bizer/bizeros?sponsor=1" target="_blank" rel="noreferrer" className="btn btn-ghost">
+              <a href="https://github.com/kelsi-bizer/bizeros-dashboard?sponsor=1" target="_blank" rel="noreferrer" className="btn btn-ghost">
                 <IconHeart className="me-1 icon text-pink" size={24} />
                 {t('HEADER_SPONSOR')}
               </a>

@@ -18,6 +18,7 @@ On first boot, BizerOS automatically:
    - **Mattermost** — team chat
    - **Nextcloud** — file sync & sharing
    - **Invoice Ninja** — invoicing & billing
+   - **WordPress** — website / CMS
    - **Tailscale** — zero-config private networking
 
 Everything else is opt-in via the standard app store browser.

@@ -8,7 +8,7 @@ import { AppLifecycleService } from '@/modules/app-lifecycle/app-lifecycle.servi
 import { AppStoreService } from '@/modules/app-stores/app-store.service';
 import { MarketplaceService } from '@/modules/marketplace/marketplace.service';
 
-const CURATED_APPS = ['authentik', 'bizeros-dashboard', 'bizeros-chat', 'miles-agent', 'nextcloud', 'invoice-ninja', 'infisical'];
+const CURATED_APPS = ['authentik', 'bizeros-dash', 'bizeros-chat', 'miles', 'nextcloud', 'invoice-ninja', 'infisical'];
 
 const FLAG_FILENAME = 'bizeros-firstboot-complete';
 const READY_TIMEOUT_MS = 5 * 60 * 1000;

@@ -14,9 +14,9 @@ On first boot, BizerOS automatically:
 1. Registers [github.com/kelsi-bizer/bizeros-appstore](https://github.com/kelsi-bizer/bizeros-appstore) as the default app store.
 2. Installs a curated set of business-ready apps:
    - **Authentik** — SSO / identity
-   - **BizerOS Dash** — the BizerOS dashboard, slug `bizeros-dashboard` ([source](https://github.com/kelsi-bizer/bizeros-dashboard))
+   - **BizerOS Dash** — the BizerOS dashboard, slug `bizeros-dash` ([source](https://github.com/kelsi-bizer/bizeros-dashboard))
    - **BizerOS Chat** — team chat, slug `bizeros-chat` ([source](https://github.com/kelsi-bizer/bizeros-chat))
-   - **Miles** — the Miles agent, slug `miles-agent` ([source](https://github.com/kelsi-bizer/miles-agent))
+   - **Miles** — the Miles agent, slug `miles` ([source](https://github.com/kelsi-bizer/miles-agent))
    - **Nextcloud** — file sync & sharing
    - **Invoice Ninja** — invoicing & billing
    - **Infisical** — secrets management

@@ -15,6 +15,7 @@ import { SystemEventsQueue } from './modules/queue/entities/system-events';
 import { DOCKERODE } from './modules/docker/docker.module';
 import Dockerode from 'dockerode';
 import { GithubService } from './utils/github/github.service';
+import { FirstBootService } from './modules/bootstrap/first-boot.service';
 
 @Injectable()
 export class AppService {
@@ -30,6 +31,7 @@ export class AppService {
     private readonly databaseService: DatabaseService,
     private readonly appLifecycleService: AppLifecycleService,
     private readonly githubService: GithubService,
+    private readonly firstBootService: FirstBootService,
     @Inject(DOCKERODE) private docker: Dockerode,
   ) {}
 
@@ -74,6 +76,8 @@ export class AppService {
       if (__prod__ && (buster !== version || version === 'nightly')) {
         this.appLifecycleService.restartRunningApps();
       }
+
+      await this.firstBootService.runIfNeeded();
     } catch (e) {
       this.logger.error(e);
       Sentry.captureException(e, { tags: { source: 'bootstrap' } });
@@ -84,8 +88,8 @@ export class AppService {
     const { version: currentVersion } = this.configuration.getConfig();
 
     const [githubRelease, releasesSince] = await Promise.all([
-      this.githubService.getLatestRelease('runtipi', 'runtipi'),
-      this.githubService.getReleasesSince('runtipi', 'runtipi', currentVersion),
+      this.githubService.getLatestRelease('kelsi-bizer', 'bizeros'),
+      this.githubService.getReleasesSince('kelsi-bizer', 'bizeros', currentVersion),
     ]);
 
     return {
@@ -193,7 +197,7 @@ export class AppService {
       }),
     );
 
-    const subject = `/O=runtipi.io/OU=IT/CN=*.${data.localDomain}/emailAddress=webmaster@${data.localDomain}`;
+    const subject = `/O=bizeros.io/OU=IT/CN=*.${data.localDomain}/emailAddress=webmaster@${data.localDomain}`;
     const subjectAltName = `DNS:*.${data.localDomain},DNS:${data.localDomain}`;
 
     try {

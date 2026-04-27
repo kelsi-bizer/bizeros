@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import type React from 'react';
 
 export const THEME_COLOR_ENUM = {
+  bizeros: 'bizeros',
   blue: 'blue',
   azure: 'azure',
   indigo: 'indigo',

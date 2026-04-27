@@ -19,8 +19,8 @@ async function setupSwagger(app: INestApplication) {
   }
 
   const config = new DocumentBuilder()
-    .setTitle('Runtipi API')
-    .setDescription('API specs for Runtipi')
+    .setTitle('BizerOS API')
+    .setDescription('API specs for BizerOS')
     .setVersion('1.0')
     .setOpenAPIVersion('3.1.0')
     .build();

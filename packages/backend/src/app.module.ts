@@ -21,6 +21,7 @@ import { SSEModule } from './core/sse/sse.module';
 import { AppLifecycleModule } from './modules/app-lifecycle/app-lifecycle.module';
 import { AppStoreModule } from './modules/app-stores/app-store.module';
 import { AppsModule } from './modules/apps/apps.module';
+import { BootstrapModule } from './modules/bootstrap/bootstrap.module';
 import { AuthMiddleware } from './modules/auth/auth.middleware';
 import { BackupsModule } from './modules/backups/backups.module';
 import { DebugModule } from './modules/debug/debug.module';
@@ -69,6 +70,7 @@ const imports: (DynamicModule | typeof I18nModule)[] = [
   GithubModule,
   CustomAppsModule,
   AppConfigModule,
+  BootstrapModule,
 ];
 
 const { NODE_ENV } = process.env;

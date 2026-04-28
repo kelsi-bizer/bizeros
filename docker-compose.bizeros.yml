@@ -27,15 +27,13 @@ services:
         condition: service_healthy
       runtipi-docker-socket-proxy:
         condition: service_started
-    image: traefik:v3.5
+    image: traefik:v3.6.12
     restart: unless-stopped
     ports:
       - 80:80
       - 443:443
       - 8080:8080
-    command:
-      - --providers.docker
-      - --providers.docker.endpoint=tcp://runtipi-docker-socket-proxy:2375
+    command: --providers.docker
     volumes:
       - ./.internal/traefik:/etc/traefik
       - ./.internal/traefik/shared:/shared

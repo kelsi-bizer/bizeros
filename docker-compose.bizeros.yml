@@ -4,24 +4,41 @@
 # (which mounts this file at /data/docker-compose.yml) keeps behaving the same.
 
 services:
+  runtipi-docker-socket-proxy:
+    container_name: runtipi-docker-socket-proxy
+    image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      SERVICES: 1
+      TASKS: 1
+      INFO: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - tipi_main_network
+
   runtipi-reverse-proxy:
     container_name: runtipi-reverse-proxy
     depends_on:
       runtipi:
         condition: service_healthy
+      runtipi-docker-socket-proxy:
+        condition: service_started
     image: traefik:v3.5
     restart: unless-stopped
     ports:
       - 80:80
       - 443:443
       - 8080:8080
-    command: --providers.docker
-    environment:
-      DOCKER_API_VERSION: "1.43"
+    command:
+      - --providers.docker
+      - --providers.docker.endpoint=tcp://runtipi-docker-socket-proxy:2375
     volumes:
       - ./.internal/traefik:/etc/traefik
       - ./.internal/traefik/shared:/shared
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - tipi_main_network
 

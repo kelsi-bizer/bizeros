@@ -179,6 +179,35 @@ describe('AppHelpers', () => {
       expect(envMap.get('APP_PROTOCOL')).toBe('https');
     });
 
+    it('should auto-default APP_DOMAIN to <app>-<store>.<DOMAIN> when exposed without a custom domain', async () => {
+      // Arrange
+      const envMap = new Map<string, string>([['DOMAIN', 'bizer.bizeros.com']]);
+      envUtils.envStringToMap.mockReturnValue(envMap);
+
+      // Act
+      await appHelpers.generateEnvFile(testAppUrn, { exposed: true });
+
+      // Assert
+      expect(envMap.get('APP_EXPOSED')).toBe('true');
+      expect(envMap.get('APP_DOMAIN')).toBe('test-app-test-store.bizer.bizeros.com');
+      expect(envMap.get('APP_HOST')).toBe('test-app-test-store.bizer.bizeros.com');
+      expect(envMap.get('APP_EXPOSED_DOMAIN')).toBe('test-app-test-store.bizer.bizeros.com');
+      expect(envMap.get('APP_PROTOCOL')).toBe('https');
+    });
+
+    it('should not set APP_EXPOSED when exposed=true but neither custom domain nor platform DOMAIN is set', async () => {
+      // Arrange
+      const envMap = new Map<string, string>();
+      envUtils.envStringToMap.mockReturnValue(envMap);
+
+      // Act
+      await appHelpers.generateEnvFile(testAppUrn, { exposed: true });
+
+      // Assert
+      expect(envMap.get('APP_EXPOSED')).toBe('false');
+      expect(envMap.get('APP_EXPOSED_DOMAIN')).toBeUndefined();
+    });
+
     it('should set correct domain settings for local exposure', async () => {
       // Arrange
       const envMap = new Map<string, string>([['LOCAL_DOMAIN', 'local.test']]);

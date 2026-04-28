@@ -121,12 +121,19 @@ export class AppHelpers {
       }
     }
 
-    if (form.exposed && form.domain && typeof form.domain === 'string') {
-      envMap.set('APP_EXPOSED', 'true');
-      envMap.set('APP_DOMAIN', form.domain);
-      envMap.set('APP_HOST', form.domain);
-      envMap.set('APP_EXPOSED_DOMAIN', form.domain);
-      envMap.set('APP_PROTOCOL', 'https');
+    if (form.exposed) {
+      const customDomain = typeof form.domain === 'string' && form.domain.length > 0 ? form.domain : null;
+      const platformDomain = envMap.get('DOMAIN');
+      const autoDomain = platformDomain ? `${appName}-${appStoreId}.${platformDomain}` : null;
+      const resolvedDomain = customDomain ?? autoDomain;
+
+      if (resolvedDomain) {
+        envMap.set('APP_EXPOSED', 'true');
+        envMap.set('APP_DOMAIN', resolvedDomain);
+        envMap.set('APP_HOST', resolvedDomain);
+        envMap.set('APP_EXPOSED_DOMAIN', resolvedDomain);
+        envMap.set('APP_PROTOCOL', 'https');
+      }
     }
 
     await this.appFilesManager.writeAppEnv(appUrn, this.envUtils.envMapToString(envMap));

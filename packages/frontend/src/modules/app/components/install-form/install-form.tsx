@@ -64,7 +64,7 @@ export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit,
   const watchOpenPort = watch('openPort', !info.force_expose);
   const watchExposedLocal = watch('exposedLocal', false);
 
-  const { appName } = extractAppUrn(info.urn as AppUrn);
+  const { appName, appStoreId: storeId } = extractAppUrn(info.urn as AppUrn);
 
   useEffect(() => {
     if (initialValues && !isDirty) {
@@ -127,7 +127,7 @@ export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit,
             label={t('APP_INSTALL_FORM_DOMAIN_NAME')}
             error={errors.domain?.message}
             disabled={loading}
-            placeholder={domain ? `${appName}.${domain}` : `${appName}.example.com`}
+            placeholder={domain ? `${appName}-${storeId}.${domain}` : `${appName}.example.com`}
           />
           <span className="text-muted">{t('APP_INSTALL_FORM_DOMAIN_NAME_HINT')}</span>
         </div>

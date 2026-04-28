@@ -29,6 +29,17 @@ services:
       - 443:443
       - 8080:8080
     command: --providers.docker
+    environment:
+      # DNS-01 wildcard cert support. Set DNS_CHALLENGE_PROVIDER and the
+      # provider's auth env vars (e.g. CLOUDFLARE_DNS_API_TOKEN) in the
+      # root .env to enable wildcard certs for auto-exposed apps.
+      DNS_CHALLENGE_PROVIDER: ${DNS_CHALLENGE_PROVIDER:-}
+      CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-}
+      CLOUDFLARE_EMAIL: ${CLOUDFLARE_EMAIL:-}
+      CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_KEY:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-}
     volumes:
       - ./.internal/traefik:/etc/traefik
       - ./.internal/traefik/shared:/shared

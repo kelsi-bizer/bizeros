@@ -122,6 +122,9 @@ export class DockerComposeBuilder {
       }
 
       if (xruntipiParams.internal_port && service.network_mode === undefined && (form.exposed || form.exposedLocal)) {
+        const hasCustomDomain = typeof form.domain === 'string' && form.domain.length > 0;
+        const useWildcardCert = Boolean(form.exposed) && !hasCustomDomain;
+
         const traefikLabels = new TraefikLabelsBuilder({
           storeId: appStoreId,
           appId: appName,
@@ -130,6 +133,7 @@ export class DockerComposeBuilder {
           exposed: form.exposed,
           enableAuth: form.enableAuth,
           localSubdomain: form.localSubdomain,
+          useWildcardCert,
         })
           .addExposedLabels()
           .addExposedLocalLabels();

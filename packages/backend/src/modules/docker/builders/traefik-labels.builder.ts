@@ -6,6 +6,7 @@ interface TraefikLabelsArgs {
   storeId: string;
   enableAuth?: boolean;
   localSubdomain?: string;
+  useWildcardCert?: boolean;
 }
 
 export class TraefikLabelsBuilder {
@@ -23,6 +24,8 @@ export class TraefikLabelsBuilder {
 
   addExposedLabels() {
     if (this.params.exposed) {
+      const certResolver = this.params.useWildcardCert ? 'wildcardresolver' : 'myresolver';
+
       Object.assign(this.labels, {
         'traefik.enable': true,
         [`traefik.http.routers.${this.params.appId}-${this.params.storeId}-insecure.rule`]: 'Host(`${APP_DOMAIN}`)',
@@ -32,8 +35,15 @@ export class TraefikLabelsBuilder {
         [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.rule`]: 'Host(`${APP_DOMAIN}`)',
         [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.entrypoints`]: 'websecure',
         [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.service`]: `${this.params.appId}-${this.params.storeId}`,
-        [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.tls.certresolver`]: 'myresolver',
+        [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.tls.certresolver`]: certResolver,
       });
+
+      if (this.params.useWildcardCert) {
+        Object.assign(this.labels, {
+          [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.tls.domains[0].main`]: '${DOMAIN}',
+          [`traefik.http.routers.${this.params.appId}-${this.params.storeId}.tls.domains[0].sans`]: '*.${DOMAIN}',
+        });
+      }
 
       if (this.params.enableAuth) {
         Object.assign(this.labels, {

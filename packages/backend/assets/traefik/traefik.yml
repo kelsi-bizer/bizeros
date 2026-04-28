@@ -21,12 +21,31 @@ entryPoints:
         certResolver: myresolver
 
 certificatesResolvers:
+  # Per-host certs via HTTP-01 challenge. Used for apps installed with a
+  # custom domain. Works without DNS provider credentials, but issues one
+  # certificate per app subdomain (subject to Let's Encrypt rate limits).
   myresolver:
     acme:
       email: acme@thisprops.com
       storage: /shared/acme.json
       httpChallenge:
         entryPoint: web
+  # Wildcard cert for *.${DOMAIN} via DNS-01 challenge. Used automatically
+  # for apps exposed without a custom domain (i.e. routed at
+  # <app>-<store>.${DOMAIN}). Requires a DNS provider configured via the
+  # DNS_CHALLENGE_PROVIDER env var on the Traefik container, plus the
+  # provider's auth env vars (e.g. CLOUDFLARE_DNS_API_TOKEN).
+  # Provider list: https://doc.traefik.io/traefik/https/acme/#providers
+  wildcardresolver:
+    acme:
+      email: acme@thisprops.com
+      storage: /shared/acme-wildcard.json
+      dnsChallenge:
+        provider: "${DNS_CHALLENGE_PROVIDER:-cloudflare}"
+        delayBeforeCheck: 30
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"
 
 log:
   level: ERROR

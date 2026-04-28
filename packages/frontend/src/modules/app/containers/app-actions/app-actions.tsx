@@ -45,6 +45,7 @@ interface IProps {
   info: AppInfo;
   metadata: AppMetadata;
   localDomain?: string;
+  domain?: string;
   sslPort?: number;
 }
 
@@ -65,9 +66,9 @@ const ActionButton: React.FC<BtnProps> = (props) => {
   );
 };
 
-type OpenType = 'local' | 'domain' | 'local_domain';
+type OpenType = 'local' | 'domain' | 'local_domain' | 'auto_domain';
 
-export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps) => {
+export const AppActions = ({ app, info, localDomain, domain, metadata, sslPort }: IProps) => {
   const installDisclosure = useDisclosure();
   const stopDisclosure = useDisclosure();
   const restartDisclosure = useDisclosure();
@@ -86,6 +87,10 @@ export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps
   const updateAvailable = Number(app?.version ?? 0) < Number(metadata?.latestVersion || 0);
 
   const appLocalDomain = `${metadata.localSubdomain}.${localDomain}${sslPort !== 443 ? `:${sslPort}` : ''}`;
+
+  const [appNameForUrl, storeIdForUrl] = info.urn.split(':');
+  const appAutoDomain =
+    domain && app?.exposed && !app.domain ? `${appNameForUrl}-${storeIdForUrl}.${domain}${sslPort !== 443 ? `:${sslPort}` : ''}` : '';
 
   const startMutation = useMutation({
     ...startAppMutation(),
@@ -243,6 +248,12 @@ export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps
               {sslPort !== 443 ? `:${sslPort}` : ''}
             </DropdownMenuItem>
           )}
+          {appAutoDomain && (
+            <DropdownMenuItem onClick={() => handleOpen('auto_domain')}>
+              <IconLock className="text-green me-2" size={16} />
+              {appAutoDomain}
+            </DropdownMenuItem>
+          )}
           {app?.exposedLocal && (
             <DropdownMenuItem onClick={() => handleOpen('local_domain')}>
               <IconLock className="text-muted me-2" size={16} />
@@ -343,6 +354,10 @@ export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps
 
     if (type === 'local_domain') {
       url = `https://${appLocalDomain}${info.url_suffix || ''}`;
+    }
+
+    if (type === 'auto_domain' && appAutoDomain) {
+      url = `https://${appAutoDomain}${info.url_suffix || ''}`;
     }
 
     window.open(url, '_blank', 'noreferrer');

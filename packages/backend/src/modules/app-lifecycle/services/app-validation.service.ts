@@ -21,8 +21,9 @@ export class AppValidationService {
 
   private validateDomainSettings(form: ParsedForm) {
     const { exposed, domain } = form;
+    const { userSettings } = this.config.getConfig();
 
-    if (exposed && !domain) {
+    if (exposed && !domain && !userSettings.domain) {
       throw new TranslatableError('APP_ERROR_DOMAIN_REQUIRED_IF_EXPOSE_APP');
     }
 

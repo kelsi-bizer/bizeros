@@ -63,7 +63,14 @@ export const CustomAppDetailsPage = () => {
           <div className="mb-1">
             <AppStatus status={app?.status ?? 'missing'} />
           </div>
-          <AppActions app={app} metadata={metadata} info={info} localDomain={userSettings.localDomain} sslPort={userSettings.sslPort} />
+          <AppActions
+            app={app}
+            metadata={metadata}
+            info={info}
+            localDomain={userSettings.localDomain}
+            domain={userSettings.domain}
+            sslPort={userSettings.sslPort}
+          />
         </div>
       </div>
       <AppDetailsTabs info={info} app={app} metadata={metadata} />

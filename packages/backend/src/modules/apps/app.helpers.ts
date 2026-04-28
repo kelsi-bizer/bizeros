@@ -124,7 +124,7 @@ export class AppHelpers {
     if (form.exposed) {
       const customDomain = typeof form.domain === 'string' && form.domain.length > 0 ? form.domain : null;
       const platformDomain = envMap.get('DOMAIN');
-      const autoDomain = platformDomain ? `${appName}-${appStoreId}.${platformDomain}` : null;
+      const autoDomain = platformDomain ? `${appName}.${platformDomain}` : null;
       const resolvedDomain = customDomain ?? autoDomain;
 
       if (resolvedDomain) {

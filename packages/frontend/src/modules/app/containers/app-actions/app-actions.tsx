@@ -88,9 +88,8 @@ export const AppActions = ({ app, info, localDomain, domain, metadata, sslPort }
 
   const appLocalDomain = `${metadata.localSubdomain}.${localDomain}${sslPort !== 443 ? `:${sslPort}` : ''}`;
 
-  const [appNameForUrl, storeIdForUrl] = info.urn.split(':');
-  const appAutoDomain =
-    domain && app?.exposed && !app.domain ? `${appNameForUrl}-${storeIdForUrl}.${domain}${sslPort !== 443 ? `:${sslPort}` : ''}` : '';
+  const [appNameForUrl] = info.urn.split(':');
+  const appAutoDomain = domain && app?.exposed && !app.domain ? `${appNameForUrl}.${domain}${sslPort !== 443 ? `:${sslPort}` : ''}` : '';
 
   const startMutation = useMutation({
     ...startAppMutation(),

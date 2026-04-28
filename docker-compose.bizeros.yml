@@ -136,11 +136,11 @@ services:
       traefik.http.routers.dashboard.rule: PathPrefix("/")
       traefik.http.routers.dashboard.service: dashboard
       traefik.http.routers.dashboard.entrypoints: web
-      traefik.http.routers.dashboard-insecure.rule: Host(`${DOMAIN}`) && PathPrefix(`/`)
+      traefik.http.routers.dashboard-insecure.rule: Host(`dash.${DOMAIN}`)
       traefik.http.routers.dashboard-insecure.service: dashboard
       traefik.http.routers.dashboard-insecure.entrypoints: web
       traefik.http.routers.dashboard-insecure.middlewares: redirect-to-https
-      traefik.http.routers.dashboard-secure.rule: Host(`${DOMAIN}`) && PathPrefix(`/`)
+      traefik.http.routers.dashboard-secure.rule: Host(`dash.${DOMAIN}`)
       traefik.http.routers.dashboard-secure.service: dashboard
       traefik.http.routers.dashboard-secure.entrypoints: websecure
       traefik.http.routers.dashboard-secure.tls.certresolver: myresolver

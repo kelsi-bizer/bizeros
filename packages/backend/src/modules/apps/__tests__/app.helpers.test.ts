@@ -179,7 +179,7 @@ describe('AppHelpers', () => {
       expect(envMap.get('APP_PROTOCOL')).toBe('https');
     });
 
-    it('should auto-default APP_DOMAIN to <app>-<store>.<DOMAIN> when exposed without a custom domain', async () => {
+    it('should auto-default APP_DOMAIN to <app>.<DOMAIN> when exposed without a custom domain', async () => {
       // Arrange
       const envMap = new Map<string, string>([['DOMAIN', 'bizer.bizeros.com']]);
       envUtils.envStringToMap.mockReturnValue(envMap);
@@ -189,9 +189,9 @@ describe('AppHelpers', () => {
 
       // Assert
       expect(envMap.get('APP_EXPOSED')).toBe('true');
-      expect(envMap.get('APP_DOMAIN')).toBe('test-app-test-store.bizer.bizeros.com');
-      expect(envMap.get('APP_HOST')).toBe('test-app-test-store.bizer.bizeros.com');
-      expect(envMap.get('APP_EXPOSED_DOMAIN')).toBe('test-app-test-store.bizer.bizeros.com');
+      expect(envMap.get('APP_DOMAIN')).toBe('test-app.bizer.bizeros.com');
+      expect(envMap.get('APP_HOST')).toBe('test-app.bizer.bizeros.com');
+      expect(envMap.get('APP_EXPOSED_DOMAIN')).toBe('test-app.bizer.bizeros.com');
       expect(envMap.get('APP_PROTOCOL')).toBe('https');
     });
 

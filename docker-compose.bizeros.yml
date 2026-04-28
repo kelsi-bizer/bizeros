@@ -16,6 +16,8 @@ services:
       - 443:443
       - 8080:8080
     command: --providers.docker
+    environment:
+      DOCKER_API_VERSION: "1.43"
     volumes:
       - ./.internal/traefik:/etc/traefik
       - ./.internal/traefik/shared:/shared
@@ -97,6 +99,7 @@ services:
       INTERNAL_IP: ${INTERNAL_IP}
       TIPI_VERSION: ${TIPI_VERSION:-latest}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      DOCKER_API_VERSION: "1.43"
     env_file:
       - .env
     labels:

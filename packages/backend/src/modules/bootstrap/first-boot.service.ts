@@ -1,6 +1,8 @@
+import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Injectable } from '@nestjs/common';
+import type { AppUrn } from '@runtipi/common/types';
 import { createAppUrn } from '@/common/helpers/app-helpers';
 import { ConfigurationService } from '@/core/config/configuration.service';
 import { LoggerService } from '@/core/logger/logger.service';
@@ -97,10 +99,72 @@ export class FirstBootService {
     const appUrn = createAppUrn(appName, storeSlug);
     try {
       this.logger.info(`[FirstBoot] installing curated app: ${appUrn}`);
-      const { requestId } = await this.appLifecycleService.installApp({ appUrn, form: {} });
+      const form = await this.buildPlaceholderForm(appUrn);
+      const { requestId } = await this.appLifecycleService.installApp({ appUrn, form });
       this.logger.info(`[FirstBoot] install dispatched for ${appUrn} (requestId=${requestId})`);
     } catch (err) {
       this.logger.error(`[FirstBoot] error installing ${appUrn}`, err);
     }
+  }
+
+  /**
+   * Generate placeholder values for any required form field that has no default
+   * and isn't a 'random' type (which the install pipeline auto-generates).
+   * Lets first-boot install apps that would otherwise fail validation. Customers
+   * reconfigure via each app's settings dialog after first login.
+   */
+  private async buildPlaceholderForm(appUrn: AppUrn): Promise<Record<string, string | number | boolean>> {
+    const form: Record<string, string | number | boolean> = {};
+
+    let appInfo: Awaited<ReturnType<MarketplaceService['getAppInfoFromAppStore']>>;
+    try {
+      appInfo = await this.marketplaceService.getAppInfoFromAppStore(appUrn);
+    } catch (err) {
+      this.logger.warn(`[FirstBoot] could not load app info for ${appUrn}, installing with empty form: ${(err as Error).message}`);
+      return form;
+    }
+
+    const fields = appInfo?.form_fields ?? [];
+    if (fields.length === 0) return form;
+
+    const { domain, internalIp } = this.configuration.getConfig().userSettings;
+    const safeDomain = domain || 'bizeros.local';
+    const fallbackEmail = `admin@${safeDomain}`;
+
+    for (const field of fields) {
+      if (field.type === 'random') continue;
+      if (field.default !== undefined) continue;
+      if (!field.required) continue;
+
+      switch (field.type) {
+        case 'email':
+          form[field.env_variable] = fallbackEmail;
+          break;
+        case 'password':
+          form[field.env_variable] = randomBytes(16).toString('hex');
+          break;
+        case 'url':
+          form[field.env_variable] = `https://${safeDomain}`;
+          break;
+        case 'fqdn':
+        case 'fqdnip':
+          form[field.env_variable] = safeDomain;
+          break;
+        case 'ip':
+          form[field.env_variable] = internalIp || '127.0.0.1';
+          break;
+        case 'number':
+          form[field.env_variable] = field.min ?? 1;
+          break;
+        case 'boolean':
+          form[field.env_variable] = false;
+          break;
+        default:
+          form[field.env_variable] = 'bizeros';
+          break;
+      }
+    }
+
+    return form;
   }
 }

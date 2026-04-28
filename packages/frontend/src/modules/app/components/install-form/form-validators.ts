@@ -74,7 +74,11 @@ export const validateField = (field: FormField, value: unknown): ValidationError
 };
 
 const validateDomain = (domain?: unknown): ValidationError | undefined => {
-  if (typeof domain !== 'string' || !validator.isFQDN(domain || '')) {
+  if (domain === undefined || domain === null || domain === '') {
+    return undefined;
+  }
+
+  if (typeof domain !== 'string' || !validator.isFQDN(domain)) {
     return { messageKey: 'APP_INSTALL_FORM_ERROR_FQDN', params: { label: String(domain) } };
   }
 

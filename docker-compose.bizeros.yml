@@ -35,6 +35,9 @@ services:
       - 8080:8080
     command: --providers.docker
     environment:
+      # Email used by Let's Encrypt for cert expiry notices and recovery.
+      # Required for ACME to issue certs.
+      ACME_EMAIL: ${ACME_EMAIL}
       # DNS-01 wildcard cert support. Set DNS_CHALLENGE_PROVIDER and the
       # provider's auth env vars (e.g. CLOUDFLARE_DNS_API_TOKEN) in the
       # root .env to enable wildcard certs for auto-exposed apps.

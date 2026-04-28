@@ -26,7 +26,7 @@ certificatesResolvers:
   # certificate per app subdomain (subject to Let's Encrypt rate limits).
   myresolver:
     acme:
-      email: acme@thisprops.com
+      email: "${ACME_EMAIL}"
       storage: /shared/acme.json
       httpChallenge:
         entryPoint: web
@@ -38,7 +38,7 @@ certificatesResolvers:
   # Provider list: https://doc.traefik.io/traefik/https/acme/#providers
   wildcardresolver:
     acme:
-      email: acme@thisprops.com
+      email: "${ACME_EMAIL}"
       storage: /shared/acme-wildcard.json
       dnsChallenge:
         provider: "${DNS_CHALLENGE_PROVIDER:-cloudflare}"

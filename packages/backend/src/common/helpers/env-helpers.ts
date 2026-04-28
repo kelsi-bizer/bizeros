@@ -109,7 +109,9 @@ export const generateSystemEnvFile = async (): Promise<Map<string, string>> => {
   envMap.set('DNS_IP', settings.dnsIp || envMap.get('DNS_IP') || '9.9.9.9');
   envMap.set('ARCHITECTURE', getArchitecture());
   envMap.set('JWT_SECRET', jwtSecret);
-  envMap.set('DOMAIN', settings.domain || envMap.get('DOMAIN') || 'example.com');
+  const resolvedDomain = settings.domain || envMap.get('DOMAIN') || 'example.com';
+  envMap.set('DOMAIN', resolvedDomain);
+  envMap.set('ACME_EMAIL', envMap.get('ACME_EMAIL') || process.env.ACME_EMAIL || `acme@${resolvedDomain}`);
   envMap.set('RUNTIPI_APP_DATA_PATH', appDataPath || rootFolderHost);
   envMap.set('RUNTIPI_FORWARD_AUTH_URL', settings.forwardAuthUrl || envMap.get('RUNTIPI_FORWARD_AUTH_URL') || 'http://runtipi:3000/api/auth/traefik');
   envMap.set('POSTGRES_HOST', 'runtipi-db');

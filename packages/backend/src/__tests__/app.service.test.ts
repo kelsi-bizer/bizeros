@@ -91,8 +91,8 @@ describe('AppService', () => {
       expect(result.current).toBe(version);
       expect(result.latest).toBe(latest);
       expect(result.body).toBe(body);
-      expect(githubService.getLatestRelease).toHaveBeenCalledWith('runtipi', 'runtipi');
-      expect(githubService.getReleasesSince).toHaveBeenCalledWith('runtipi', 'runtipi', version);
+      expect(githubService.getLatestRelease).toHaveBeenCalledWith('kelsi-bizer', 'bizeros');
+      expect(githubService.getReleasesSince).toHaveBeenCalledWith('kelsi-bizer', 'bizeros', version);
     });
 
     it('should return current version if github service returns empty', async () => {

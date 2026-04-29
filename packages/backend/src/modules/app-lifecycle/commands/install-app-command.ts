@@ -74,6 +74,11 @@ export class InstallAppCommand extends AppLifecycleCommand {
 
       return { success: true, message: `App ${appUrn} installed successfully` };
     } catch (err) {
+      try {
+        await dockerService.composeApp(appUrn, 'down --remove-orphans');
+      } catch (cleanupErr) {
+        logger.warn(`Cleanup 'down' failed for ${appUrn}: ${(cleanupErr as Error).message}`);
+      }
       return this.handleAppError(err, appUrn, 'install');
     }
   }

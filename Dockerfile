@@ -11,7 +11,7 @@ FROM bun_base AS builder_base
 WORKDIR /deps
 
 ARG TARGETARCH
-ARG DOCKER_COMPOSE_VERSION="v2.40.0"
+ARG DOCKER_COMPOSE_VERSION="v5.1.3"
 ENV TARGETARCH=${TARGETARCH}
 
 RUN apk add --no-cache curl python3 make g++ git

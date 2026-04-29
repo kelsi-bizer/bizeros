@@ -91,22 +91,25 @@ export class DockerService {
     const exitCode = await new Promise((resolve) => {
       cmd.stdout.on('data', (data) => {
         this.logger.debug(`docker-compose: ${String(data).trim()}`);
-        stdout.push(String(data).trim());
+        stdout.push(String(data));
       });
       cmd.stderr.on('data', (data) => {
         this.logger.debug(`docker-compose: ${String(data).trim()}`);
-        stderr.push(String(data).trim());
+        stderr.push(String(data));
       });
       cmd.on('close', resolve);
     });
 
     if (exitCode !== 0) {
-      this.logger.info(`Docker-compose exited with code ${exitCode}`);
+      const fullStderr = stderr.join('').trim();
+      const fullStdout = stdout.join('').trim();
+      this.logger.error(`docker-compose exited with code ${exitCode} for ${appUrn}`);
+      if (fullStderr) this.logger.error(`docker-compose stderr:\n${fullStderr}`);
+      if (fullStdout) this.logger.error(`docker-compose stdout:\n${fullStdout}`);
       if (isCustomConfig) {
         this.logger.warn('User-config detected, please make sure your configuration is correct before opening an issue');
       }
-      const error = stderr.pop();
-      throw new Error(error);
+      throw new Error(fullStderr || fullStdout || `docker-compose exited with code ${exitCode}`);
     }
 
     return { success: true, stdout: stdout.join(''), stderr: stderr.join('') };

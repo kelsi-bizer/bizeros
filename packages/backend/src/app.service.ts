@@ -100,6 +100,26 @@ export class AppService {
     };
   }
 
+  /**
+   * Render a template file by substituting ${VAR} and ${VAR:-default} placeholders
+   * with values from the provided context. Used for config files (e.g. Traefik
+   * static config) that don't natively interpolate environment variables.
+   */
+  private async renderTemplate(srcPath: string, destPath: string, context: Record<string, string>) {
+    const content = await this.filesystem.readTextFile(srcPath);
+    if (content === null) {
+      throw new Error(`Template not found: ${srcPath}`);
+    }
+
+    const rendered = content.replace(/\$\{([A-Z0-9_]+)(?::-([^}]*))?\}/g, (_match, name: string, fallback?: string) => {
+      const value = context[name];
+      if (value !== undefined && value !== '') return value;
+      return fallback ?? '';
+    });
+
+    await this.filesystem.writeTextFile(destPath, rendered);
+  }
+
   public async copyAssets() {
     const { directories, userSettings } = this.configuration.getConfig();
     const { appDir, dataDir, appDataDir } = directories;
@@ -117,8 +137,14 @@ export class AppService {
     if (userSettings.persistTraefikConfig) {
       this.logger.warn('Skipping the copy of traefik files because persistTraefikConfig is set to true');
     } else {
-      this.logger.info('Copying traefik files');
-      await this.filesystem.copyFile(path.join(assetsFolder, 'traefik', 'traefik.yml'), path.join(dataDir, 'traefik', 'traefik.yml'));
+      this.logger.info('Rendering traefik files');
+      const resolvedDomain = userSettings.domain || 'example.com';
+      const traefikContext: Record<string, string> = {
+        ACME_EMAIL: process.env.ACME_EMAIL || `acme@${resolvedDomain}`,
+        DNS_CHALLENGE_PROVIDER: process.env.DNS_CHALLENGE_PROVIDER || 'cloudflare',
+        DOMAIN: resolvedDomain,
+      };
+      await this.renderTemplate(path.join(assetsFolder, 'traefik', 'traefik.yml'), path.join(dataDir, 'traefik', 'traefik.yml'), traefikContext);
       await this.filesystem.copyFile(
         path.join(assetsFolder, 'traefik', 'dynamic', 'dynamic.yml'),
         path.join(dataDir, 'traefik', 'dynamic', 'dynamic.yml'),

@@ -33,6 +33,17 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Generate OCI labels (revision, source, created, ...) and tag the image
+      # with both :nightly (floating) and :sha-<short> (immutable, pinnable).
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/bizeros
+          tags: |
+            type=raw,value=nightly
+            type=sha,prefix=sha-,format=short
+
       - name: Build and push nightly image
         uses: docker/build-push-action@v7
         with:
@@ -42,6 +53,7 @@ jobs:
             LOCAL=true
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/bizeros:nightly
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

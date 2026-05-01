@@ -259,6 +259,15 @@ rm -f .internal/traefik/traefik.yml
 echo "==> pulling image ghcr.io/kelsi-bizer/bizeros:$VERSION"
 docker compose -f docker-compose.bizeros.yml pull
 
+# Surface what we actually got. OCI revision label is set by the GHCR build
+# pipeline (metadata-action). If the publish workflow hasn't caught up yet,
+# this will print a commit SHA older than develop's HEAD — useful diagnostic.
+IMAGE_REVISION="$(docker inspect "ghcr.io/kelsi-bizer/bizeros:$VERSION" \
+  --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' 2>/dev/null || true)"
+IMAGE_CREATED="$(docker inspect "ghcr.io/kelsi-bizer/bizeros:$VERSION" \
+  --format '{{.Created}}' 2>/dev/null || true)"
+echo "    image revision: ${IMAGE_REVISION:-unknown} (built ${IMAGE_CREATED:-unknown})"
+
 echo "==> starting BizerOS"
 docker compose -f docker-compose.bizeros.yml up -d
 

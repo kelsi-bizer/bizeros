@@ -104,11 +104,13 @@ export class AppService {
    * Render a template file by substituting ${VAR} and ${VAR:-default} placeholders
    * with values from the provided context. Used for config files (e.g. Traefik
    * static config) that don't natively interpolate environment variables.
+   * Soft-fails when the source is missing (matches FilesystemService.copyFile).
    */
-  private async renderTemplate(srcPath: string, destPath: string, context: Record<string, string>) {
+  private async renderTemplate(srcPath: string, destPath: string, context: Record<string, string>): Promise<boolean> {
     const content = await this.filesystem.readTextFile(srcPath);
     if (content === null) {
-      throw new Error(`Template not found: ${srcPath}`);
+      this.logger.error(`Template not found, skipping render: ${srcPath}`);
+      return false;
     }
 
     const rendered = content.replace(/\$\{([A-Z0-9_]+)(?::-([^}]*))?\}/g, (_match, name: string, fallback?: string) => {
@@ -117,7 +119,7 @@ export class AppService {
       return fallback ?? '';
     });
 
-    await this.filesystem.writeTextFile(destPath, rendered);
+    return this.filesystem.writeTextFile(destPath, rendered);
   }
 
   public async copyAssets() {

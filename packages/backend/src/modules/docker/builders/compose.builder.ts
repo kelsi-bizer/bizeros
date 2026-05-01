@@ -88,6 +88,7 @@ export class DockerComposeBuilder {
     form: AppEventFormInput,
     appUrn: AppUrn,
     hasMultipleServices: boolean,
+    wildcardCertAvailable: boolean,
   ) => {
     const { appName, appStoreId } = extractAppUrn(appUrn);
 
@@ -123,7 +124,12 @@ export class DockerComposeBuilder {
 
       if (xruntipiParams.internal_port && service.network_mode === undefined && (form.exposed || form.exposedLocal)) {
         const hasCustomDomain = typeof form.domain === 'string' && form.domain.length > 0;
-        const useWildcardCert = Boolean(form.exposed) && !hasCustomDomain;
+        // Only request a wildcard cert if a DNS-01 provider is configured. Without
+        // one, Traefik's wildcardresolver fails silently and apps land with the
+        // self-signed fallback cert. Fall back to per-app HTTP-01 (myresolver) so
+        // auto-routed apps work out of the box; admins who configure a DNS provider
+        // get the more efficient single-wildcard-cert path.
+        const useWildcardCert = Boolean(form.exposed) && !hasCustomDomain && wildcardCertAvailable;
 
         const traefikLabels = new TraefikLabelsBuilder({
           storeId: appStoreId,
@@ -151,7 +157,14 @@ export class DockerComposeBuilder {
     return serviceCopy as NormalizedComposeService;
   };
 
-  public getDockerCompose = (input: DynamicComposeSchemaYaml, form: AppEventFormInput, appUrn: AppUrn, subnet: string, architecture?: string) => {
+  public getDockerCompose = (
+    input: DynamicComposeSchemaYaml,
+    form: AppEventFormInput,
+    appUrn: AppUrn,
+    subnet: string,
+    architecture?: string,
+    wildcardCertAvailable = false,
+  ) => {
     const { appName, appStoreId } = extractAppUrn(appUrn);
     const appId = `${appName}-${appStoreId}`;
 
@@ -181,7 +194,7 @@ export class DockerComposeBuilder {
       const service = inputCopy.services[serviceName];
       if (!service) continue;
 
-      const built = this.buildService(service, form, appUrn, hasMultipleServices);
+      const built = this.buildService(service, form, appUrn, hasMultipleServices, wildcardCertAvailable);
 
       if (built.labels) {
         built.labels = interpolateLabels(built.labels, appId);

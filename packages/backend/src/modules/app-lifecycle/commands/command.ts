@@ -45,7 +45,8 @@ export class AppLifecycleCommand {
 
       const dockerComposeBuilder = new DockerComposeBuilder();
       const subnet = await subnetManager.allocateSubnet(appUrn);
-      const composeFile = dockerComposeBuilder.getDockerCompose(composeJson.content, form, appUrn, subnet, architecture);
+      const wildcardCertAvailable = Boolean(process.env.DNS_CHALLENGE_PROVIDER);
+      const composeFile = dockerComposeBuilder.getDockerCompose(composeJson.content, form, appUrn, subnet, architecture, wildcardCertAvailable);
 
       await appFilesManager.writeDockerComposeYml(appUrn, composeFile);
     } catch (err) {

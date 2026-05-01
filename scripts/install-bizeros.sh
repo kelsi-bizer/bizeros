@@ -12,7 +12,7 @@
 # Flags:
 #   --domain <fqdn>     (required) Public domain for the dashboard
 #   --version <tag>     (default: nightly) Image tag to pull
-#   --branch <branch>   (default: main) Branch to fetch the compose file from
+#   --branch <branch>   (default: develop) Branch to fetch the compose file from
 #   --install-dir <dir> (default: /opt/bizeros) Where to install
 #   --local-domain <d>  (default: bizeros.local) LAN domain for Traefik
 
@@ -23,7 +23,7 @@ set -o pipefail
 # ---------- defaults ----------
 DOMAIN=""
 VERSION="nightly"
-BRANCH="main"
+BRANCH="develop"
 INSTALL_DIR="/opt/bizeros"
 LOCAL_DOMAIN="bizeros.local"
 COMPOSE_URL_BASE="https://raw.githubusercontent.com/kelsi-bizer/bizeros"
@@ -125,6 +125,7 @@ INTERNAL_IP=$INTERNAL_IP
 TIPI_VERSION=$VERSION
 ROOT_FOLDER_HOST=$INSTALL_DIR/.internal
 LOG_LEVEL=info
+ACME_EMAIL=admin@$DOMAIN
 
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 RABBITMQ_USERNAME=tipi

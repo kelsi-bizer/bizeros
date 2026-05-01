@@ -10,14 +10,20 @@
 #   sudo bash install-bizeros.sh --domain client1.bizeros.com
 #
 # Flags:
-#   --domain <fqdn>      (required) Public domain for the dashboard
-#   --acme-email <email> (default: admin@<domain>) Let's Encrypt contact email
-#   --version <tag>      (default: nightly) Image tag to pull
-#   --branch <branch>    (default: develop) Branch to fetch the compose file from
-#   --install-dir <dir>  (default: /opt/bizeros) Where to install
-#   --local-domain <d>   (default: bizeros.local) LAN domain for Traefik
-#   --skip-dns-check     Skip the public-DNS preflight (use only if your DNS
-#                        propagates slowly and you've manually verified it)
+#   --domain <fqdn>       (required) Public domain for the dashboard
+#   --acme-email <email>  (default: admin@<domain>) Let's Encrypt contact email
+#   --cf-api-token <tok>  (optional) Cloudflare API token with DNS-edit scope on
+#                         <domain>. If provided, Traefik issues a single
+#                         *.<domain> wildcard cert via DNS-01 covering every
+#                         exposed app. Without it, each exposed app gets its own
+#                         per-subdomain HTTP-01 cert (subject to Let's Encrypt's
+#                         50-cert/week per registered-domain limit).
+#   --version <tag>       (default: nightly) Image tag to pull
+#   --branch <branch>     (default: develop) Branch to fetch the compose file from
+#   --install-dir <dir>   (default: /opt/bizeros) Where to install
+#   --local-domain <d>    (default: bizeros.local) LAN domain for Traefik
+#   --skip-dns-check      Skip the public-DNS preflight (use only if your DNS
+#                         propagates slowly and you've manually verified it)
 
 set -o errexit
 set -o nounset
@@ -26,6 +32,7 @@ set -o pipefail
 # ---------- defaults ----------
 DOMAIN=""
 ACME_EMAIL=""
+CF_API_TOKEN=""
 VERSION="nightly"
 BRANCH="develop"
 INSTALL_DIR="/opt/bizeros"
@@ -38,13 +45,14 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --domain)        shift; DOMAIN="$1" ;;
     --acme-email)    shift; ACME_EMAIL="$1" ;;
+    --cf-api-token)  shift; CF_API_TOKEN="$1" ;;
     --version)       shift; VERSION="$1" ;;
     --branch)        shift; BRANCH="$1" ;;
     --install-dir)   shift; INSTALL_DIR="$1" ;;
     --local-domain)  shift; LOCAL_DOMAIN="$1" ;;
     --skip-dns-check) SKIP_DNS_CHECK=1 ;;
     -h|--help)
-      sed -n '2,22p' "$0"
+      sed -n '2,28p' "$0"
       exit 0 ;;
     *) echo "Unknown flag: $1" >&2; exit 1 ;;
   esac
@@ -68,6 +76,11 @@ echo "    local domain  = $LOCAL_DOMAIN"
 echo "    image tag     = $VERSION"
 echo "    install dir   = $INSTALL_DIR"
 echo "    compose source= $BRANCH"
+if [ -n "$CF_API_TOKEN" ]; then
+  echo "    cert mode     = wildcard (Cloudflare DNS-01)"
+else
+  echo "    cert mode     = per-app (HTTP-01)"
+fi
 echo
 
 ARCH="$(uname -m)"
@@ -194,7 +207,7 @@ EOF
   chmod 600 .env
 else
   echo "==> reusing existing .env"
-  # Ensure DOMAIN and ACME_EMAIL match the flags. Replace if present, append if not.
+  # Sync DOMAIN, ACME_EMAIL, TIPI_VERSION to the flags. Replace if present, append if not.
   for kv in "DOMAIN=$DOMAIN" "ACME_EMAIL=$ACME_EMAIL" "TIPI_VERSION=$VERSION"; do
     key="${kv%%=*}"
     if grep -q "^${key}=" .env; then
@@ -204,6 +217,35 @@ else
     fi
   done
 fi
+
+# ---------- DNS-01 wildcard cert (optional, Cloudflare) ----------
+# Without these env vars Traefik issues per-app HTTP-01 certs (works out of the
+# box but hits LE rate limits faster). With them, Traefik issues a single
+# *.<DOMAIN> cert via DNS-01 covering every exposed app. The compose generator
+# in runtipi auto-detects DNS_CHALLENGE_PROVIDER and routes auto-routed apps to
+# the wildcard resolver only when it's set.
+sync_env_var() {
+  local key="$1"
+  local value="$2"
+  if grep -q "^${key}=" .env; then
+    if [ -n "$value" ]; then
+      sed -i "s|^${key}=.*|${key}=${value}|" .env
+    else
+      sed -i "/^${key}=/d" .env
+    fi
+  elif [ -n "$value" ]; then
+    echo "${key}=${value}" >> .env
+  fi
+}
+
+if [ -n "$CF_API_TOKEN" ]; then
+  echo "==> enabling Cloudflare DNS-01 wildcard cert"
+  sync_env_var "DNS_CHALLENGE_PROVIDER" "cloudflare"
+  sync_env_var "CLOUDFLARE_DNS_API_TOKEN" "$CF_API_TOKEN"
+fi
+# A previously-set DNS provider in .env stays sticky on re-run unless the
+# operator removes those lines manually. That's intentional — re-running the
+# installer for an update shouldn't silently disable wildcard certs.
 
 # ---------- clean stale Traefik state on every run ----------
 # acme.json caches a Let's Encrypt account+cert tied to the previous DOMAIN/email.

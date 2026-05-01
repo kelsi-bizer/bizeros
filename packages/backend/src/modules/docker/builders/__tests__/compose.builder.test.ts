@@ -599,4 +599,54 @@ volumes:
       expect(resultParsed.services.web.restart).toBe('no');
     });
   });
+
+  describe('Cert resolver selection', () => {
+    const exposedApp = `services:
+  web:
+    image: nginx:alpine
+    x-runtipi:
+      is_main: true
+      internal_port: 80
+`;
+
+    it('should use myresolver (HTTP-01) for exposed apps with a custom domain', () => {
+      const parsed = yaml.parse(exposedApp);
+      const result = composeBuilder.getDockerCompose(parsed, { exposed: true, domain: 'wordpress.example.com' }, urn, subnet, undefined, true);
+
+      const resultParsed = yaml.parse(result);
+      const labels = resultParsed.services.web.labels;
+      expect(labels['traefik.http.routers.nginx-store-id.tls.certresolver']).toBe('myresolver');
+      expect(labels['traefik.http.routers.nginx-store-id.tls.domains[0].main']).toBeUndefined();
+    });
+
+    it('should use myresolver (HTTP-01) for auto-routed exposed apps when no DNS provider is configured', () => {
+      const parsed = yaml.parse(exposedApp);
+      const result = composeBuilder.getDockerCompose(parsed, { exposed: true }, urn, subnet, undefined, false);
+
+      const resultParsed = yaml.parse(result);
+      const labels = resultParsed.services.web.labels;
+      expect(labels['traefik.http.routers.nginx-store-id.tls.certresolver']).toBe('myresolver');
+      expect(labels['traefik.http.routers.nginx-store-id.tls.domains[0].main']).toBeUndefined();
+    });
+
+    it('should use wildcardresolver (DNS-01) for auto-routed exposed apps when a DNS provider is configured', () => {
+      const parsed = yaml.parse(exposedApp);
+      const result = composeBuilder.getDockerCompose(parsed, { exposed: true }, urn, subnet, undefined, true);
+
+      const resultParsed = yaml.parse(result);
+      const labels = resultParsed.services.web.labels;
+      expect(labels['traefik.http.routers.nginx-store-id.tls.certresolver']).toBe('wildcardresolver');
+      expect(labels['traefik.http.routers.nginx-store-id.tls.domains[0].main']).toBe('${DOMAIN}');
+      expect(labels['traefik.http.routers.nginx-store-id.tls.domains[0].sans']).toBe('*.${DOMAIN}');
+    });
+
+    it('should default wildcardCertAvailable to false when not provided', () => {
+      const parsed = yaml.parse(exposedApp);
+      const result = composeBuilder.getDockerCompose(parsed, { exposed: true }, urn, subnet);
+
+      const resultParsed = yaml.parse(result);
+      const labels = resultParsed.services.web.labels;
+      expect(labels['traefik.http.routers.nginx-store-id.tls.certresolver']).toBe('myresolver');
+    });
+  });
 });

@@ -10,6 +10,7 @@ import { LoggerService } from '@/core/logger/logger.service';
 import { AppLifecycleService } from '@/modules/app-lifecycle/app-lifecycle.service';
 import { AppStoreService } from '@/modules/app-stores/app-store.service';
 import { MarketplaceService } from '@/modules/marketplace/marketplace.service';
+import { AppsRepository } from '@/modules/apps/apps.repository';
 
 const CURATED_APPS = ['authentik', 'bizeros-dash', 'bizeros-chat', 'miles', 'nextcloud', 'invoice-ninja', 'infisical'];
 
@@ -26,7 +27,51 @@ export class FirstBootService {
     private readonly appStoreService: AppStoreService,
     private readonly marketplaceService: MarketplaceService,
     private readonly appLifecycleService: AppLifecycleService,
+    private readonly appsRepository: AppsRepository,
   ) {}
+
+  /**
+   * Snapshot of the curated install state for the dashboard "Setting up your
+   * apps..." banner. Cross-references the static curated list against current
+   * DB state so the operator sees per-app progress without polling N endpoints.
+   */
+  public async getStatus(): Promise<{
+    complete: boolean;
+    apps: Array<{ name: string; status: 'pending' | 'installing' | 'running' | 'stopped' | 'missing' | 'error' }>;
+  }> {
+    const complete = this.alreadyRan();
+    const storeSlug = await this.resolveDefaultStoreSlug();
+
+    const apps = await Promise.all(
+      CURATED_APPS.map(async (name) => ({
+        name,
+        status: await this.statusFor(name, storeSlug),
+      })),
+    );
+
+    return { complete, apps };
+  }
+
+  private async statusFor(
+    appName: string,
+    storeSlug: string | null,
+  ): Promise<'pending' | 'installing' | 'running' | 'stopped' | 'missing' | 'error'> {
+    if (!storeSlug) return 'pending';
+    const record = await this.appsRepository.getAppByUrn(createAppUrn(appName, storeSlug));
+    if (!record) return 'pending';
+
+    switch (record.status) {
+      case 'running':
+      case 'stopped':
+      case 'installing':
+      case 'missing':
+        return record.status;
+      // Any other transient or error state collapses to 'error' for the banner.
+      // The operator can drill into the per-app page for full detail.
+      default:
+        return 'error';
+    }
+  }
 
   private get flagPath() {
     const { directories } = this.configuration.getConfig();

@@ -9,13 +9,17 @@ import { FilesystemService } from './core/filesystem/filesystem.service';
 import { LoggerService } from './core/logger/logger.service';
 import { AppLifecycleService } from './modules/app-lifecycle/app-lifecycle.service';
 import { AppStoreService } from './modules/app-stores/app-store.service';
+import { BackupsService } from './modules/backups/backups.service';
 import { MarketplaceService } from './modules/marketplace/marketplace.service';
+import { scheduleCron, validateCronPattern } from './modules/queue/cron-scheduler';
 import { RepoEventsQueue } from './modules/queue/entities/repo-events';
 import { SystemEventsQueue } from './modules/queue/entities/system-events';
 import { DOCKERODE } from './modules/docker/docker.module';
 import Dockerode from 'dockerode';
 import { GithubService } from './utils/github/github.service';
 import { FirstBootService } from './modules/bootstrap/first-boot.service';
+
+const DEFAULT_BACKUP_CRON = '0 3 * * *';
 
 @Injectable()
 export class AppService {
@@ -32,8 +36,30 @@ export class AppService {
     private readonly appLifecycleService: AppLifecycleService,
     private readonly githubService: GithubService,
     private readonly firstBootService: FirstBootService,
+    private readonly backupsService: BackupsService,
     @Inject(DOCKERODE) private docker: Dockerode,
   ) {}
+
+  private scheduleNightlyBackups(__prod__: boolean) {
+    if (!__prod__) return;
+
+    const configured = this.configuration.get('userSettings').backupCron;
+    const pattern = validateCronPattern(configured) ? configured : DEFAULT_BACKUP_CRON;
+    if (pattern !== configured) {
+      this.logger.warn(`Invalid BACKUP_CRON "${configured}", falling back to "${DEFAULT_BACKUP_CRON}"`);
+    }
+
+    scheduleCron(pattern, async () => {
+      try {
+        this.logger.info(`[Backups] running scheduled backup-all (cron="${pattern}")`);
+        await this.backupsService.backupAllApps();
+      } catch (err) {
+        this.logger.error('[Backups] scheduled backup-all failed', err);
+        Sentry.captureException(err, { tags: { source: 'backup-cron' } });
+      }
+    });
+    this.logger.info(`[Backups] nightly backup scheduled at "${pattern}"`);
+  }
 
   public async bootstrap() {
     try {
@@ -69,6 +95,7 @@ export class AppService {
         this.repoQueue.publishRepeatable({ command: 'update_all' }, '*/15 * * * *');
       }
       this.systemEventsQueue.publishRepeatable({ command: 'sync_app_statuses' }, '*/5 * * * *');
+      this.scheduleNightlyBackups(__prod__);
 
       await this.copyAssets();
       await this.generateTlsCertificates({ localDomain: userSettings.localDomain });

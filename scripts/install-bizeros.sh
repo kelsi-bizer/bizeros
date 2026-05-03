@@ -195,6 +195,7 @@ TIPI_VERSION=$VERSION
 ROOT_FOLDER_HOST=$INSTALL_DIR/.internal
 LOG_LEVEL=info
 ACME_EMAIL=$ACME_EMAIL
+MAX_BACKUPS=7
 
 POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 RABBITMQ_USERNAME=tipi
@@ -208,6 +209,7 @@ EOF
 else
   echo "==> reusing existing .env"
   # Sync DOMAIN, ACME_EMAIL, TIPI_VERSION to the flags. Replace if present, append if not.
+  # MAX_BACKUPS is only added if missing (existing operator overrides preserved).
   for kv in "DOMAIN=$DOMAIN" "ACME_EMAIL=$ACME_EMAIL" "TIPI_VERSION=$VERSION"; do
     key="${kv%%=*}"
     if grep -q "^${key}=" .env; then
@@ -216,6 +218,12 @@ else
       echo "$kv" >> .env
     fi
   done
+  # Backfill MAX_BACKUPS=7 only if the existing .env is missing the key. This
+  # preserves any value the operator set explicitly (e.g. MAX_BACKUPS=14 for
+  # longer retention, or =0 to keep all backups indefinitely).
+  if ! grep -q "^MAX_BACKUPS=" .env; then
+    echo "MAX_BACKUPS=7" >> .env
+  fi
 fi
 
 # ---------- DNS-01 wildcard cert (optional, Cloudflare) ----------

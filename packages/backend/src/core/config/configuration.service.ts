@@ -44,7 +44,8 @@ const envSchema = type({
   ADVANCED_SETTINGS: 'string',
   THEME_BASE: 'string',
   THEME_COLOR: 'string',
-  MAX_BACKUPS: type('number | string.numeric.parse').default(0),
+  MAX_BACKUPS: type('number | string.numeric.parse').default(7),
+  BACKUP_CRON: 'string = "0 3 * * *"',
   // Experimental flags
   EXPERIMENTAL_INSECURE_COOKIE: 'string',
 });
@@ -131,6 +132,7 @@ export class ConfigurationService {
         advancedSettings: env.ADVANCED_SETTINGS.toLowerCase() === 'true',
         logLevel,
         maxBackups: env.MAX_BACKUPS,
+        backupCron: env.BACKUP_CRON,
         themeBase: env.THEME_BASE,
         themeColor: env.THEME_COLOR,
         experimental: {

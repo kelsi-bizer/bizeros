@@ -25,7 +25,16 @@ Everything else is opt-in via the standard app store browser.
 
 ## Getting started
 
-Installation instructions follow the upstream Runtipi flow until BizerOS ships its own packaged installer. See the [Runtipi getting-started docs](https://www.runtipi.io/docs/getting-started/installation) for now; only the default app store and the curated bundle differ.
+Provision a fresh Linux VM (Ubuntu/Debian, x86_64 or arm64), point `<client>.bizeros.com` and `*.<client>.bizeros.com` A records at it, then run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kelsi-bizer/bizeros/develop/scripts/install-bizeros.sh \
+  | sudo bash -s -- --domain <client>.bizeros.com
+```
+
+The installer validates DNS, generates secrets, pulls the GHCR image, brings the stack up, and waits for Let's Encrypt to issue a real cert before declaring success. Open `https://dash.<client>.bizeros.com` and create the admin account.
+
+For day-2 operations — updates, password reset, cert recovery, backup restore, "apps stopped working" — see [`OPERATIONS.md`](./OPERATIONS.md).
 
 ## Development
 

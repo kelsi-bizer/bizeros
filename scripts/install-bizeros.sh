@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
-# BizerOS install script — provisions a fresh Linux VM to run BizerOS.
+# BizerOS install script — provisions a fresh Linux VM to run BizerOS, or
+# updates an existing install in place.
 #
-# Usage:
+# Fresh install:
 #   curl -fsSL https://raw.githubusercontent.com/kelsi-bizer/bizeros/develop/scripts/install-bizeros.sh \
 #     | sudo bash -s -- --domain client1.bizeros.com
+#
+# Update an existing install (preserves .env, secrets, app data, certs):
+#   curl -fsSL .../install-bizeros.sh | sudo bash -s -- --update
 #
 # Or download and run interactively:
 #   curl -fsSL .../install-bizeros.sh -o install-bizeros.sh
 #   sudo bash install-bizeros.sh --domain client1.bizeros.com
 #
 # Flags:
-#   --domain <fqdn>       (required) Public domain for the dashboard
+#   --domain <fqdn>       (required for fresh install) Public domain for the
+#                         dashboard. On --update, taken from the existing .env.
+#   --update              Update an existing install in place: skip DNS preflight
+#                         and Traefik state wipe, pull the latest image, recreate
+#                         containers, verify the existing cert is still valid.
+#                         Requires .env to already exist at --install-dir.
 #   --acme-email <email>  (default: admin@<domain>) Let's Encrypt contact email
 #   --cf-api-token <tok>  (optional) Cloudflare API token with DNS-edit scope on
 #                         <domain>. If provided, Traefik issues a single
@@ -38,6 +47,7 @@ BRANCH="develop"
 INSTALL_DIR="/opt/bizeros"
 LOCAL_DOMAIN="bizeros.local"
 SKIP_DNS_CHECK=0
+UPDATE_MODE=0
 COMPOSE_URL_BASE="https://raw.githubusercontent.com/kelsi-bizer/bizeros"
 
 # ---------- arg parsing ----------
@@ -51,13 +61,32 @@ while [ $# -gt 0 ]; do
     --install-dir)   shift; INSTALL_DIR="$1" ;;
     --local-domain)  shift; LOCAL_DOMAIN="$1" ;;
     --skip-dns-check) SKIP_DNS_CHECK=1 ;;
+    --update)         UPDATE_MODE=1 ;;
     -h|--help)
-      sed -n '2,28p' "$0"
+      sed -n '2,38p' "$0"
       exit 0 ;;
     *) echo "Unknown flag: $1" >&2; exit 1 ;;
   esac
   shift
 done
+
+# In --update mode, take DOMAIN from the existing .env if not supplied. This
+# lets the operator update with a single command:
+#    curl -fsSL .../install-bizeros.sh | sudo bash -s -- --update
+if [ "$UPDATE_MODE" -eq 1 ]; then
+  if [ ! -f "$INSTALL_DIR/.env" ]; then
+    echo "ERROR: --update requires an existing .env at $INSTALL_DIR/.env" >&2
+    echo "       (no install detected; drop --update for a fresh install)" >&2
+    exit 1
+  fi
+  if [ -z "$DOMAIN" ]; then
+    DOMAIN="$(grep -E '^DOMAIN=' "$INSTALL_DIR/.env" | head -1 | cut -d= -f2-)"
+    if [ -z "$DOMAIN" ]; then
+      echo "ERROR: existing .env does not contain DOMAIN" >&2
+      exit 1
+    fi
+  fi
+fi
 
 if [ -z "$DOMAIN" ]; then
   echo "ERROR: --domain is required (e.g. --domain client1.bizeros.com)" >&2
@@ -69,7 +98,11 @@ if [ -z "$ACME_EMAIL" ]; then
 fi
 
 # ---------- preflight ----------
-echo "==> BizerOS installer"
+if [ "$UPDATE_MODE" -eq 1 ]; then
+  echo "==> BizerOS updater (in-place; preserving .env, secrets, app data, certs)"
+else
+  echo "==> BizerOS installer"
+fi
 echo "    domain        = $DOMAIN"
 echo "    acme email    = $ACME_EMAIL"
 echo "    local domain  = $LOCAL_DOMAIN"
@@ -100,22 +133,27 @@ case "$OS_ID" in
   *) echo "WARN: tested on Ubuntu/Debian, $OS_ID may need manual Docker install" ;;
 esac
 
-# Ensure dig is available for the DNS preflight
-if ! command -v dig >/dev/null 2>&1; then
+# Ensure dig is available for the DNS preflight (skipped in --update mode).
+if [ "$UPDATE_MODE" -eq 0 ] && ! command -v dig >/dev/null 2>&1; then
   echo "==> installing dnsutils for DNS preflight"
   apt-get update -qq && apt-get install -y -qq dnsutils >/dev/null
 fi
 
 # ---------- detect public IP ----------
-PUBLIC_IP="$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)"
-if [ -z "$PUBLIC_IP" ]; then
-  echo "ERROR: could not detect this VM's public IP (api.ipify.org unreachable)" >&2
-  exit 1
+# Skipped in --update mode (existing install already proved DNS reaches this VM).
+if [ "$UPDATE_MODE" -eq 0 ]; then
+  PUBLIC_IP="$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)"
+  if [ -z "$PUBLIC_IP" ]; then
+    echo "ERROR: could not detect this VM's public IP (api.ipify.org unreachable)" >&2
+    exit 1
+  fi
+  echo "==> VM public IP: $PUBLIC_IP"
 fi
-echo "==> VM public IP: $PUBLIC_IP"
 
 # ---------- DNS preflight ----------
-if [ "$SKIP_DNS_CHECK" -eq 0 ]; then
+# Skipped in --update mode (existing install already proved DNS works; re-running
+# the preflight just delays the update by 5+ seconds for no benefit).
+if [ "$UPDATE_MODE" -eq 0 ] && [ "$SKIP_DNS_CHECK" -eq 0 ]; then
   echo "==> checking public DNS for $DOMAIN"
   RESOLVED="$(dig +short +time=5 +tries=2 @1.1.1.1 "$DOMAIN" A 2>/dev/null | tail -1)"
   if [ -z "$RESOLVED" ]; then
@@ -255,12 +293,19 @@ fi
 # operator removes those lines manually. That's intentional — re-running the
 # installer for an update shouldn't silently disable wildcard certs.
 
-# ---------- clean stale Traefik state on every run ----------
+# ---------- clean stale Traefik state ----------
 # acme.json caches a Let's Encrypt account+cert tied to the previous DOMAIN/email.
 # Stale state from a failed prior install causes "served self-signed *.bizeros.local"
-# even after the underlying problem is fixed.
-echo "==> clearing stale Traefik state"
-rm -f .internal/traefik/shared/acme.json .internal/traefik/shared/acme-wildcard.json
+# even after the underlying problem is fixed. We always re-render traefik.yml so
+# any template changes in the new image are picked up. We only blow away acme.json
+# on a fresh install -- in update mode the cert is already valid and re-issuing
+# burns Let's Encrypt rate limit for no reason.
+if [ "$UPDATE_MODE" -eq 1 ]; then
+  echo "==> re-rendering Traefik config (preserving acme.json)"
+else
+  echo "==> clearing stale Traefik state"
+  rm -f .internal/traefik/shared/acme.json .internal/traefik/shared/acme-wildcard.json
+fi
 rm -f .internal/traefik/traefik.yml
 
 # ---------- pull + start ----------
@@ -311,16 +356,25 @@ for _ in $(seq 1 18); do
 done
 
 echo
+if [ "$UPDATE_MODE" -eq 1 ]; then
+  HEADLINE_OK="BizerOS updated."
+  HEADLINE_PARTIAL="BizerOS updated, but the cert check failed. Verify manually."
+else
+  HEADLINE_OK="BizerOS is up."
+  HEADLINE_PARTIAL="BizerOS is up, but Traefik hasn't issued a Let's Encrypt cert yet."
+fi
+
 if [ "$CERT_READY" -eq 1 ]; then
-  echo "BizerOS is up."
+  echo "$HEADLINE_OK"
   echo "  Dashboard:  https://dash.$DOMAIN"
   echo "  Local:      https://$LOCAL_DOMAIN  (point /etc/hosts at $INTERNAL_IP)"
 else
-  echo "BizerOS is up, but Traefik hasn't issued a Let's Encrypt cert yet."
+  echo "$HEADLINE_PARTIAL"
   echo "  Dashboard:  https://dash.$DOMAIN  (will load once the cert issues)"
   echo "  Tail certs: cd $INSTALL_DIR && docker compose -f docker-compose.bizeros.yml \\"
   echo "              logs -f runtipi-reverse-proxy 2>&1 | grep -iE 'acme|certificate'"
 fi
 echo "  Logs:       cd $INSTALL_DIR && docker compose -f docker-compose.bizeros.yml logs -f runtipi"
 echo "  Stop:       cd $INSTALL_DIR && docker compose -f docker-compose.bizeros.yml down"
+echo "  Update:     curl -fsSL $COMPOSE_URL_BASE/$BRANCH/scripts/install-bizeros.sh | sudo bash -s -- --update"
 exit 0

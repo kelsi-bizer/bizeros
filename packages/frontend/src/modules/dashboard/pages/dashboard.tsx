@@ -3,6 +3,7 @@ import { IconCircuitResistor, IconCpu, IconDatabase } from '@tabler/icons-react'
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { FirstBootProgress } from '../components/first-boot-progress';
+import { RecentErrors } from '../components/recent-errors';
 import { SystemStat } from '../components/system-stat';
 
 export default () => {
@@ -16,6 +17,7 @@ export default () => {
   return (
     <div className="row row-deck row-cards px-1">
       <FirstBootProgress />
+      <RecentErrors />
       <SystemStat
         isLoading={isLoading}
         title={t('DASHBOARD_DISK_SPACE_TITLE')}

@@ -27,6 +27,10 @@
 #                         exposed app. Without it, each exposed app gets its own
 #                         per-subdomain HTTP-01 cert (subject to Let's Encrypt's
 #                         50-cert/week per registered-domain limit).
+#   --sentry-dsn <dsn>    (optional) Enable backend error reporting to Sentry.
+#                         Writes SENTRY_DSN to .env and sets
+#                         ALLOW_ERROR_MONITORING=true. Operators can also
+#                         toggle this later from Settings.
 #   --version <tag>       (default: nightly) Image tag to pull
 #   --branch <branch>     (default: develop) Branch to fetch the compose file from
 #   --install-dir <dir>   (default: /opt/bizeros) Where to install
@@ -42,6 +46,7 @@ set -o pipefail
 DOMAIN=""
 ACME_EMAIL=""
 CF_API_TOKEN=""
+SENTRY_DSN=""
 VERSION="nightly"
 BRANCH="develop"
 INSTALL_DIR="/opt/bizeros"
@@ -56,6 +61,7 @@ while [ $# -gt 0 ]; do
     --domain)        shift; DOMAIN="$1" ;;
     --acme-email)    shift; ACME_EMAIL="$1" ;;
     --cf-api-token)  shift; CF_API_TOKEN="$1" ;;
+    --sentry-dsn)    shift; SENTRY_DSN="$1" ;;
     --version)       shift; VERSION="$1" ;;
     --branch)        shift; BRANCH="$1" ;;
     --install-dir)   shift; INSTALL_DIR="$1" ;;
@@ -292,6 +298,16 @@ fi
 # A previously-set DNS provider in .env stays sticky on re-run unless the
 # operator removes those lines manually. That's intentional — re-running the
 # installer for an update shouldn't silently disable wildcard certs.
+
+# ---------- Sentry error reporting (optional, opt-in) ----------
+# Same sticky-on-re-run semantics as Cloudflare: passing --sentry-dsn writes
+# the DSN and enables ALLOW_ERROR_MONITORING. Existing values stay until the
+# operator removes them manually.
+if [ -n "$SENTRY_DSN" ]; then
+  echo "==> enabling Sentry error reporting"
+  sync_env_var "SENTRY_DSN" "$SENTRY_DSN"
+  sync_env_var "ALLOW_ERROR_MONITORING" "true"
+fi
 
 # ---------- clean stale Traefik state ----------
 # acme.json caches a Let's Encrypt account+cert tied to the previous DOMAIN/email.

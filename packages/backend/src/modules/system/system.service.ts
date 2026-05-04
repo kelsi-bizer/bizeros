@@ -58,4 +58,47 @@ export class SystemService {
       return file;
     }
   }
+
+  /**
+   * Read the tail of error.log and return the entries from the last `sinceMs`
+   * milliseconds, capped at `maxEntries`. Used by the dashboard's "Recent
+   * errors" card so the operator doesn't have to SSH in to see backend errors.
+   */
+  public async getRecentErrors(params: { sinceMs: number; maxEntries: number }) {
+    const { sinceMs, maxEntries } = params;
+    const { dataDir } = this.config.get('directories');
+    const filePath = `${dataDir}/logs/error.log`;
+    const cutoff = Date.now() - sinceMs;
+
+    if (!(await this.filesystem.pathExists(filePath))) {
+      return { entries: [], total: 0 };
+    }
+
+    const content = (await this.filesystem.readTextFile(filePath)) ?? '';
+    const lines = content.split('\n').filter(Boolean);
+
+    // Winston file format from logger.service.ts: `${timestamp} - ${level} > ${message}`
+    // Timestamps are ISO 8601 (winston default), e.g. 2026-05-04T02:48:21.123Z.
+    const lineRegex = /^(?<timestamp>\S+)\s+-\s+(?<level>\w+)\s+>\s+(?<message>.*)$/;
+
+    const parsed: Array<{ timestamp: string; level: string; message: string; ts: number }> = [];
+    for (const line of lines) {
+      const match = lineRegex.exec(line);
+      const groups = match?.groups;
+      if (!groups || !groups.timestamp || !groups.level || !groups.message) continue;
+      const ts = Date.parse(groups.timestamp);
+      if (Number.isNaN(ts) || ts < cutoff) continue;
+      parsed.push({
+        timestamp: groups.timestamp,
+        level: groups.level,
+        message: groups.message,
+        ts,
+      });
+    }
+
+    // Newest first, cap to maxEntries.
+    parsed.sort((a, b) => b.ts - a.ts);
+    const entries = parsed.slice(0, maxEntries).map(({ ts: _ts, ...rest }) => rest);
+    return { entries, total: parsed.length };
+  }
 }
